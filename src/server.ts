@@ -6,6 +6,8 @@ import { config } from './config/config';
 
 import Logging from './library/logging';
 
+import { AppRoutes } from './routes';
+
 const router = express();
 
 prisma.$connect().then(() => {
@@ -56,6 +58,7 @@ const StartServer = () => {
     });
 
     /** Routes */
+    router.use('/api', AppRoutes);
 
     /** Healthcheck */
     router.get('/ping', (req: Request, res: Response) =>
