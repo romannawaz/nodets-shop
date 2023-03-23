@@ -1,11 +1,16 @@
 import express, { NextFunction, Request, Response } from 'express';
 import http from 'http';
+import prisma from '../prisma';
 
 import { config } from './config/config';
 
 import Logging from './library/logging';
 
 const router = express();
+
+prisma.$connect().then(() => {
+    StartServer();
+});
 
 /**
  * Start server if any DB connects
@@ -69,5 +74,3 @@ const StartServer = () => {
         Logging.info(`Server is running on port ${config.server.port}.`),
     );
 };
-
-StartServer();
