@@ -2,7 +2,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const TOKEN_KEY = process.env.TOKEN_KEY!;
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN!;
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN!;
 
 const MONGO_USERNAME = process.env.MONGO_USERNAME || '';
 const MONGO_PASSWORD = process.env.MONGO_PASSWORD || '';
@@ -18,5 +19,8 @@ export const config = {
     server: {
         port: SERVER_PORT,
     },
-    token_key: TOKEN_KEY,
+    token: {
+        access: ACCESS_TOKEN,
+        refresh: REFRESH_TOKEN,
+    },
 };

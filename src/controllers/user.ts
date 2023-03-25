@@ -1,9 +1,64 @@
-import { hash } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 import { Request, Response } from 'express';
 
-import prisma from '../../prisma';
+import { v4 as uuidv4 } from 'uuid';
 
-const create = async (req: Request, res: Response) => {
+import prisma from '../../prisma';
+import { CustomRequest } from '../middleware/auth';
+import { generateTokens } from '../utils/jwt';
+import { addRefreshToken, deleteTokens } from '../utils/refreshToken';
+
+const login = async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({
+                message: 'You must provide an email and a password.',
+            });
+        }
+
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (!existingUser) {
+            return res
+                .status(403)
+                .json({ message: 'Invalid login credentials.' });
+        }
+
+        const validPassword = await compare(password, existingUser.password);
+        if (!validPassword) {
+            return res
+                .status(403)
+                .json({ message: 'Invalid login credentials.' });
+        }
+
+        const jti = uuidv4();
+        const { accessToken, refreshToken } = generateTokens(existingUser, jti);
+        await addRefreshToken(jti, refreshToken, existingUser.id);
+
+        return res.json({
+            accessToken,
+            refreshToken,
+        });
+    } catch (error) {
+        return res.status(400).json(error);
+    }
+};
+
+const logout = async (req: Request, res: Response) => {
+    const { token } = req as CustomRequest;
+
+    try {
+        if (typeof token == 'string') return;
+
+        await deleteTokens(token.userId);
+
+        return res.status(200).json({ message: 'Success' });
+    } catch (error) {
+        return res.status(403).json(error);
+    }
+};
+
+const register = async (req: Request, res: Response) => {
     const { email, name, password } = req.body;
 
     if (!(email && name && password))
@@ -29,9 +84,16 @@ const create = async (req: Request, res: Response) => {
             },
         });
 
-        res.status(201).json(newUser);
+        const jti = uuidv4();
+        const { accessToken, refreshToken } = generateTokens(newUser, jti);
+        await addRefreshToken(jti, refreshToken, newUser.id);
+
+        return res.status(201).json({
+            accessToken,
+            refreshToken,
+        });
     } catch (error) {
-        res.status(400).json(error);
+        return res.status(400).json(error);
     }
 };
 
@@ -48,9 +110,9 @@ const readById = async (req: Request, res: Response) => {
         if (!user)
             return res.status(404).json({ message: 'User does not exist' });
 
-        res.status(200).json(user);
+        return res.status(200).json(user);
     } catch (error) {
-        res.status(500).json(error);
+        return res.status(500).json(error);
     }
 };
 
@@ -69,9 +131,9 @@ const updateById = async (req: Request, res: Response) => {
             data: userData,
         });
 
-        res.status(200).json(user);
+        return res.status(200).json(user);
     } catch (error) {
-        res.status(500).json(error);
+        return res.status(500).json(error);
     }
 };
 
@@ -87,14 +149,16 @@ const deleteById = async (req: Request, res: Response) => {
             where: { id },
         });
 
-        res.status(200).json(deletedUser);
+        return res.status(200).json(deletedUser);
     } catch (error) {
-        res.status(500).json(error);
+        return res.status(500).json(error);
     }
 };
 
 export const UserController = {
-    create,
+    login,
+    logout,
+    register,
     readById,
     updateById,
     deleteById,
