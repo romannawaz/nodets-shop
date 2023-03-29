@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 
 dotenv.config();
-
+// Small issue with naming convention. This is secret key for JWT
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN!;
 const REFRESH_TOKEN = process.env.REFRESH_TOKEN!;
 

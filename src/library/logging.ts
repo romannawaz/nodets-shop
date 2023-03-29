@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-
+// Shizgeno:)
 export default class Logging {
     public static log = (args: any) => this.info(args);
 
