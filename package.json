@@ -5,10 +5,11 @@
   "main": "./src/server.ts",
   "scripts": {
     "build": "rm -rf build/ && tsc",
-    "node": "node build/server.js"
+    "node": "node build/server.js",
+    "prisma:generate": "./node_modules/.bin/prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "^4.11.0",
+    "@prisma/client": "^4.12.0",
     "bcryptjs": "^2.4.3",
     "chalk": "4.1.2",
     "crypto": "^1.0.1",
