@@ -19,7 +19,7 @@ export const isAuthenticated = (
 
   try {
     const token = authorization.split(" ")[1];
-    const decoded = verify(token, config.token.refresh);
+    const decoded = verify(token, config.token_key.refresh);
 
     (req as CustomRequest).token = decoded as JwtPayload;
 

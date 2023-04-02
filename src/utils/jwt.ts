@@ -5,7 +5,7 @@ import { sign } from "jsonwebtoken";
 import { config } from "../config/config";
 
 export const generateAccessToken = (user: User): string => {
-  return sign({ userId: user.id }, config.token.access, {
+  return sign({ userId: user.id }, config.token_key.access, {
     // better be from env
     expiresIn: "5m",
   });
@@ -17,7 +17,7 @@ export const generateRefreshToken = (user: User, jti: string): string => {
       userId: user.id,
       jti,
     },
-    config.token.refresh,
+    config.token_key.refresh,
     {
       // better be from env
       expiresIn: "8h",
