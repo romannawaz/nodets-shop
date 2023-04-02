@@ -40,8 +40,6 @@ const login = async (req: Request, res: Response) => {
 const logout = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
 
-  if (typeof token == "string") return;
-
   await deleteTokens(token.userId);
 
   return res.status(200).json({ message: "Success" });

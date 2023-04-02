@@ -7,10 +7,6 @@ const add = async (req: Request, res: Response) => {
   //Why do we need to cast req to CustomRequest?
   const { token } = req as CustomRequest;
 
-  // TODO
-  //Why do we need token here?
-  if (typeof token == "string") return;
-
   const product = await prisma.product.findUnique({
     where: { id: productId },
   });
@@ -44,9 +40,6 @@ const add = async (req: Request, res: Response) => {
 const readByUserId = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
 
-  // TODO
-  if (typeof token == "string") return;
-
   // You can include both cart and products in one query https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#including-relations
   const cart = await prisma.cart.findUnique({
     where: { userId: token.userId },
@@ -67,9 +60,6 @@ const readByUserId = async (req: Request, res: Response) => {
 // you can assign user into request in auth middleware and have something like  AuthenticatedRequest
 const removeProduct = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
-
-  // TODO
-  if (typeof token == "string") return;
 
   const { productId } = req.params;
 
@@ -98,9 +88,6 @@ const removeProduct = async (req: Request, res: Response) => {
 
 const clear = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
-
-  // TODO
-  if (typeof token == "string") return;
 
   await prisma.cart.update({
     where: { userId: token.userId },
