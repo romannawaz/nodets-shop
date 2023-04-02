@@ -6,8 +6,7 @@ import { config } from "../config/config";
 
 export const generateAccessToken = (user: User): string => {
   return sign({ userId: user.id }, config.token_key.access, {
-    // better be from env
-    expiresIn: "5m",
+    expiresIn: config.token_expires_in.access,
   });
 };
 
@@ -19,8 +18,7 @@ export const generateRefreshToken = (user: User, jti: string): string => {
     },
     config.token_key.refresh,
     {
-      // better be from env
-      expiresIn: "8h",
+      expiresIn: config.token_expires_in.refresh,
     }
   );
 };
