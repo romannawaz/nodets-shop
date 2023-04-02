@@ -18,7 +18,7 @@ model User {
   refreshTokens RefreshToken[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  Cart          Cart[]
+  Cart          Cart?
 }
 
 model RefreshToken {
@@ -38,9 +38,8 @@ model Product {
 }
 
 model Cart {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId   String   @db.ObjectId @unique
-  User     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // I think we can bind this one with the Product model
-  products String[]
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productsIds String[]
+  userId      String   @unique @db.ObjectId
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
