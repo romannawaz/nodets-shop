@@ -7,7 +7,7 @@ import { config } from "../config/config";
 export const generateAccessToken = (user: User): string => {
   return sign({ userId: user.id }, config.token.access, {
     // better be from env
-    expiresIn: "5m",
+    expiresIn: "8h",
   });
 };
 

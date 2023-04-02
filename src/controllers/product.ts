@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../../prisma";
+import { CustomRequest } from "../middleware/auth";
 
 const create = async (req: Request, res: Response) => {
   const { title } = req.body;

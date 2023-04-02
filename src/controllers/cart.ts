@@ -1,9 +1,10 @@
+import { Cart } from "@prisma/client";
 import { Request, Response } from "express";
 import prisma from "../../prisma";
 import { CustomRequest } from "../middleware/auth";
 //req:CustomRequest
 const add = async (req: Request, res: Response) => {
-  const { productId } = req.params;
+  const { productId } = req.params as { productId: string };
   //Why do we need to cast req to CustomRequest?
   const { token } = req as CustomRequest;
 
@@ -17,24 +18,23 @@ const add = async (req: Request, res: Response) => {
       where: { userId: token.userId },
     });
 
-    if (!cart) {
-      await prisma.cart.create({
-        data: {
-          userId: token.userId,
-          products: [productId],
-        },
-      });
-    } else {
-      const products = [...cart.products, productId];
+    const products = cart ? [...cart.productsIDs, productId] : [productId];
+  
+    const updatedCart = await prisma.cart.upsert({
+      where: { userId: token.userId },
+      update: {
+        productsIDs: products,
+      },
+      create: {
+        userId: token.userId,
+        productsIDs: [productId],
+      },
+    });
 
-      await prisma.cart.update({
-        where: { id: cart.id },
-        data: { products },
-      });
-    }
-
-    return res.status(201).json({ message: "Success" });
+    return res.status(201).json({ message: "Success", payload: updatedCart });
   } catch (error) {
+    console.log(error);
+    
     return res.status(500).json(error);
   }
 };
@@ -48,15 +48,15 @@ const readByUserId = async (req: Request, res: Response) => {
   try {
     // You can include both cart and products in one query https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#including-relations
     const cart = await prisma.cart.findUnique({
-      where: { userId: token.userId },
+      where: { userId: token.userId }
     });
 
-    if (!cart?.products)
+    if (!cart?.productsIDs)
       return res.status(404).json({ message: "Cart is empty" });
 
     const products = await prisma.product.findMany({
       where: {
-        id: { in: cart.products },
+        id: { in: cart.productsIDs },
       },
     });
 
@@ -67,64 +67,64 @@ const readByUserId = async (req: Request, res: Response) => {
   }
 };
 // you can assign user into request in auth middleware and have something like  AuthenticatedRequest
-const removeProduct = async (req: Request, res: Response) => {
-  const { token } = req as CustomRequest;
+// const removeProduct = async (req: Request, res: Response) => {
+//   const { token } = req as CustomRequest;
 
-  // TODO
-  if (typeof token == "string") return;
+//   // TODO
+//   if (typeof token == "string") return;
 
-  const { productId } = req.params;
+//   const { productId } = req.params;
 
-  try {
-    const cart = await prisma.cart.findUnique({
-      where: { userId: token.userId },
-    });
+//   try {
+//     const cart = await prisma.cart.findUnique({
+//       where: { userId: token.userId },
+//     });
 
-    if (!cart?.products)
-      return res.status(404).json({ message: "Cart is empty" });
+//     if (!cart?.products)
+//       return res.status(404).json({ message: "Cart is empty" });
 
-    const products = cart.products;
-    //don't use delete, use filter
-    delete products[cart.products.indexOf(productId)];
+//     const products = cart.products;
+//     //don't use delete, use filter
+//     delete products[cart.products.indexOf(productId)];
 
-    await prisma.cart.update({
-      where: {
-        userId: cart?.userId,
-      },
-      data: {
-        products,
-      },
-    });
+//     await prisma.cart.update({
+//       where: {
+//         userId: cart?.userId,
+//       },
+//       data: {
+//         products,
+//       },
+//     });
 
-    return res.status(201).json({ message: "Success" });
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-};
+//     return res.status(201).json({ message: "Success" });
+//   } catch (error) {
+//     return res.status(500).json(error);
+//   }
+// };
 
-const clear = async (req: Request, res: Response) => {
-  const { token } = req as CustomRequest;
+// const clear = async (req: Request, res: Response) => {
+//   const { token } = req as CustomRequest;
 
-  // TODO
-  if (typeof token == "string") return;
+//   // TODO
+//   if (typeof token == "string") return;
 
-  try {
-    await prisma.cart.update({
-      where: { userId: token.userId },
-      data: {
-        products: [],
-      },
-    });
+//   try {
+//     await prisma.cart.update({
+//       where: { userId: token.userId },
+//       data: {
+//         products: [],
+//       },
+//     });
 
-    return res.status(201).json({ message: "Success" });
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-};
+//     return res.status(201).json({ message: "Success" });
+//   } catch (error) {
+//     return res.status(500).json(error);
+//   }
+// };
 
 export const CartController = {
   add,
   readByUserId,
-  removeProduct,
-  clear,
+  // removeProduct,
+  // clear,
 };

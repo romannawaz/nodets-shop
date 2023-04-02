@@ -1,9 +1,11 @@
 import { compare, hash } from "bcryptjs";
 import { Request, Response } from "express";
+import { verify } from "jsonwebtoken";
 
 import { v4 as uuidv4 } from "uuid";
 
 import prisma from "../../prisma";
+import { config } from "../config/config";
 import { CustomRequest } from "../middleware/auth";
 import { generateTokens } from "../utils/jwt";
 import { addRefreshToken, deleteTokens } from "../utils/refreshToken";
@@ -145,6 +147,39 @@ const deleteById = async (req: Request, res: Response) => {
   }
 };
 
+const refreshToken = async (req: Request, res: Response) => {
+  const authorization = req.headers.authorization;
+  let decoded;
+  try {
+    decoded = verify(authorization as string, config.token.refresh);
+  } catch (error) {
+    console.log(error);
+
+    return res.status(401).json(error);
+  }
+
+  if (typeof decoded == "string") return;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) return res.status(404).json({ message: "User does not exist" });
+
+    const jti = uuidv4();
+    const { accessToken, refreshToken } = generateTokens(user, jti);
+    await addRefreshToken(jti, refreshToken, user.id);
+
+    return res.status(200).json({
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
 export const UserController = {
   login,
   logout,
@@ -152,4 +187,5 @@ export const UserController = {
   readById,
   updateById,
   deleteById,
+  refreshToken,
 };

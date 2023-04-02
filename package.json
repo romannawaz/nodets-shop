@@ -6,7 +6,10 @@
   "scripts": {
     "build": "rm -rf build/ && tsc",
     "node": "node build/server.js",
-    "prisma:generate": "./node_modules/.bin/prisma generate"
+    "prisma:generate": "./node_modules/.bin/prisma generate",
+    "prisma:format": "./node_modules/.bin/prisma format",
+    "prisma:push": "./node_modules/.bin/prisma db push",
+    "nodemon:dev":"./node_modules/.bin/nodemon --exec ts-node ./src/server.ts"
   },
   "dependencies": {
     "@prisma/client": "^4.12.0",
