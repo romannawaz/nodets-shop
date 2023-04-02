@@ -14,8 +14,7 @@ const readById = async (req: Request, res: Response) => {
 
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) {
-    // User :) ?
-    return res.status(404).json({ message: "User does not exist" });
+    return res.status(404).json({ message: "Product does not exist" });
   }
 
   return res.status(200).json(product);
