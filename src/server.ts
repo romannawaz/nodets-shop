@@ -7,6 +7,7 @@ import { config } from "./config/config";
 import Logging from "./library/logging";
 
 import { AppRoutes } from "./routes";
+import { errorHandler } from "./middleware/errorHandler";
 
 const router = express();
 
@@ -61,6 +62,11 @@ const StartServer = () => {
 
   /** Routes */
   router.use("/api", AppRoutes);
+
+  /**
+   * Error Handler
+   */
+  router.use(errorHandler);
 
   /** Healthcheck */
   router.get("/ping", (req: Request, res: Response) =>
