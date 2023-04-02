@@ -5,9 +5,8 @@ import { ProductRoutes } from "./routes/product";
 import { UserRouter } from "./routes/user";
 
 const routes = Router();
-// users, products, carts. We should name in plural
-routes.use("/user", UserRouter);
-routes.use("/product", ProductRoutes);
-routes.use("/cart", CartRoutes);
+routes.use("/users", UserRouter);
+routes.use("/products", ProductRoutes);
+routes.use("/carts", CartRoutes);
 
 export { routes as AppRoutes };
