@@ -12,28 +12,24 @@ const add = async (req: Request, res: Response) => {
   if (typeof token == "string") return;
 
   try {
-    // You can avoid all of this by using upsert https://www.prisma.io/docs/reference/api-reference/prisma-client-reference#upsert
     const cart = await prisma.cart.findUnique({
       where: { userId: token.userId },
     });
 
-    if (!cart) {
-      await prisma.cart.create({
-        data: {
-          userId: token.userId,
-          products: [productId],
-        },
-      });
-    } else {
-      const products = [...cart.products, productId];
+    cart?.products.push(productId);
 
-      await prisma.cart.update({
-        where: { id: cart.id },
-        data: { products },
-      });
-    }
+    const updatedCart = await prisma.cart.upsert({
+      where: { userId: token.userId },
+      update: {
+        products: cart?.products,
+      },
+      create: {
+        userId: token.userId,
+        products: [productId],
+      },
+    });
 
-    return res.status(201).json({ message: "Success" });
+    return res.status(201).json(updatedCart.products);
   } catch (error) {
     return res.status(500).json(error);
   }
