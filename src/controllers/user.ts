@@ -30,10 +30,11 @@ const login = async (req: Request, res: Response) => {
   const jti = uuidv4();
   const { accessToken, refreshToken } = generateTokens(existingUser, jti);
   await addRefreshToken(jti, refreshToken, existingUser.id);
-  // Also here we can provide user object in response
+
   return res.json({
     accessToken,
     refreshToken,
+    existingUser,
   });
 };
 // You decided to use session based authentication?
@@ -73,10 +74,11 @@ const register = async (req: Request, res: Response) => {
   const jti = uuidv4();
   const { accessToken, refreshToken } = generateTokens(newUser, jti);
   await addRefreshToken(jti, refreshToken, newUser.id);
-  //same as with login
+
   return res.status(201).json({
     accessToken,
     refreshToken,
+    newUser,
   });
 };
 
