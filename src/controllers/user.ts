@@ -151,6 +151,7 @@ const refreshToken = async (req: Request, res: Response) => {
   const authorization = req.headers.authorization;
   let decoded;
   try {
+    // TODO if in DB
     decoded = verify(authorization as string, config.token.refresh);
   } catch (error) {
     console.log(error);
