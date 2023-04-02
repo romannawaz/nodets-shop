@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import http from "http";
 import prisma from "../prisma";
+import helmet from "helmet";
 
 import { config } from "./config/config";
 
@@ -58,7 +59,9 @@ const StartServer = () => {
 
     next();
   });
-  // also please add helmet for security https://www.npmjs.com/package/helmet
+
+  /** Helmet */
+  router.use(helmet());
 
   /** Routes */
   router.use("/api", AppRoutes);
