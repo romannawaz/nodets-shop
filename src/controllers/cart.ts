@@ -12,29 +12,43 @@ const add = async (req: Request, res: Response) => {
   if (typeof token == "string") return;
 
   try {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product)
+      return res
+        .status(404)
+        .json({ message: "Wrong id! Product does not exist!" });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+
+  try {
     const cart = await prisma.cart.findUnique({
       where: { userId: token.userId },
     });
 
-    cart?.products.push(productId);
+    const products = cart ? [...cart.productsIds, productId] : [productId];
 
     const updatedCart = await prisma.cart.upsert({
       where: { userId: token.userId },
       update: {
-        products: cart?.products,
+        productsIds: products,
       },
       create: {
         userId: token.userId,
-        products: [productId],
+        productsIds: [productId],
       },
     });
 
-    return res.status(201).json(updatedCart.products);
+    return res.status(201).json({ message: "Success", payload: updatedCart });
   } catch (error) {
     return res.status(500).json(error);
   }
 };
-//same as before
+
+// same as before;
 const readByUserId = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
 
@@ -47,12 +61,12 @@ const readByUserId = async (req: Request, res: Response) => {
       where: { userId: token.userId },
     });
 
-    if (!cart?.products)
+    if (!cart?.productsIds)
       return res.status(404).json({ message: "Cart is empty" });
 
     const products = await prisma.product.findMany({
       where: {
-        id: { in: cart.products },
+        id: { in: cart.productsIds },
       },
     });
 
@@ -62,6 +76,7 @@ const readByUserId = async (req: Request, res: Response) => {
     return res.status(500).json(error);
   }
 };
+
 // you can assign user into request in auth middleware and have something like  AuthenticatedRequest
 const removeProduct = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
@@ -76,23 +91,23 @@ const removeProduct = async (req: Request, res: Response) => {
       where: { userId: token.userId },
     });
 
-    if (!cart?.products)
+    if (!cart?.productsIds)
       return res.status(404).json({ message: "Cart is empty" });
 
-    const products = cart.products;
+    const products = cart.productsIds;
     //don't use delete, use filter
-    delete products[cart.products.indexOf(productId)];
+    delete products[cart.productsIds.indexOf(productId)];
 
-    await prisma.cart.update({
+    const updatedCart = await prisma.cart.update({
       where: {
         userId: cart?.userId,
       },
       data: {
-        products,
+        productsIds: products,
       },
     });
 
-    return res.status(201).json({ message: "Success" });
+    return res.status(201).json({ message: "Success", payload: updatedCart });
   } catch (error) {
     return res.status(500).json(error);
   }
@@ -108,7 +123,7 @@ const clear = async (req: Request, res: Response) => {
     await prisma.cart.update({
       where: { userId: token.userId },
       data: {
-        products: [],
+        productsIds: [],
       },
     });
 
