@@ -1,30 +1,30 @@
-import { NextFunction, Request, Response } from 'express';
-import { JwtPayload, verify } from 'jsonwebtoken';
-import { config } from '../config/config';
+import { NextFunction, Request, Response } from "express";
+import { JwtPayload, verify } from "jsonwebtoken";
+import { config } from "../config/config";
 
 export interface CustomRequest extends Request {
-    token: string | JwtPayload;
+  token: JwtPayload;
 }
 
 export const isAuthenticated = (
-    req: Request,
-    res: Response,
-    next: NextFunction,
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
-    const { authorization } = req.headers;
-    if (!authorization)
-        return res
-            .status(403)
-            .json({ message: 'A token is required for authentication' });
+  const { authorization } = req.headers;
+  if (!authorization)
+    return res
+      .status(403)
+      .json({ message: "A token is required for authentication" });
 
-    try {
-        const token = authorization.split(' ')[1];
-        const decoded = verify(token, config.token.refresh);
+  try {
+    const token = authorization.split(" ")[1];
+    const decoded = verify(token, config.token.refresh);
 
-        (req as CustomRequest).token = decoded;
+    (req as CustomRequest).token = decoded as JwtPayload;
 
-        return next();
-    } catch (error) {
-        return res.status(401).json(error);
-    }
+    return next();
+  } catch (error) {
+    return res.status(401).json(error);
+  }
 };
