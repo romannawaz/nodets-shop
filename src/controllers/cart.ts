@@ -5,6 +5,9 @@ import { CustomRequest } from "../middleware/auth";
 const add = async (req: Request, res: Response) => {
   const { productId } = req.params;
   //Why do we need to cast req to CustomRequest?
+  /**
+   * TODO: update Request type
+   */
   const { token } = req as CustomRequest;
 
   const product = await prisma.product.findUnique({
@@ -16,41 +19,42 @@ const add = async (req: Request, res: Response) => {
       .status(404)
       .json({ message: "Wrong id! Product does not exist!" });
 
-  const cart = await prisma.cart.findUnique({
-    where: { userId: token.userId },
-  });
-
-  const products = cart ? [...cart.productsIds, productId] : [productId];
-
-  const updatedCart = await prisma.cart.upsert({
-    where: { userId: token.userId },
+  const selectedProduct = await prisma.selectedProduct.upsert({
+    where: {
+      ids: {
+        userId: token.userId,
+        productId: productId,
+      },
+    },
     update: {
-      productsIds: products,
+      amount: {
+        increment: 1,
+      },
     },
     create: {
       userId: token.userId,
-      productsIds: [productId],
+      productId,
     },
   });
 
-  return res.status(201).json({ message: "Success", payload: updatedCart });
+  return res.status(201).json({ message: "Success", payload: selectedProduct });
 };
 
 // same as before;
 const readByUserId = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
 
-  // You can include both cart and products in one query https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#including-relations
-  const cart = await prisma.cart.findUnique({
+  const products = await prisma.selectedProduct.findMany({
     where: { userId: token.userId },
-  });
-
-  if (!cart?.productsIds)
-    return res.status(404).json({ message: "Cart is empty" });
-
-  const products = await prisma.product.findMany({
-    where: {
-      id: { in: cart.productsIds },
+    select: {
+      id: true,
+      amount: true,
+      product: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
     },
   });
 
@@ -60,40 +64,59 @@ const readByUserId = async (req: Request, res: Response) => {
 // you can assign user into request in auth middleware and have something like  AuthenticatedRequest
 const removeProduct = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
-
   const { productId } = req.params;
 
-  const cart = await prisma.cart.findUnique({
-    where: { userId: token.userId },
+  const product = await prisma.product.findUnique({
+    where: {
+      id: productId,
+    },
   });
 
-  if (!cart?.productsIds)
-    return res.status(404).json({ message: "Cart is empty" });
+  if (!product)
+    return res
+      .status(404)
+      .json({ message: "Product with such id does not exist!" });
 
-  const products = cart.productsIds;
-  //don't use delete, use filter
-  delete products[cart.productsIds.indexOf(productId)];
-
-  const updatedCart = await prisma.cart.update({
+  let selectedProduct = await prisma.selectedProduct.update({
     where: {
-      userId: cart?.userId,
+      ids: {
+        userId: token.userId,
+        productId,
+      },
     },
     data: {
-      productsIds: products,
+      amount: {
+        decrement: 1,
+      },
     },
   });
 
-  return res.status(201).json({ message: "Success", payload: updatedCart });
+  if (selectedProduct.amount === 0) {
+    selectedProduct = await prisma.selectedProduct.delete({
+      where: {
+        ids: {
+          userId: token.userId,
+          productId,
+        },
+      },
+    });
+
+    return res.status(201).json({
+      message: "Product removed from cart!",
+      payload: selectedProduct,
+    });
+  }
+
+  return res
+    .status(201)
+    .json({ message: "Amount decreased!", payload: selectedProduct });
 };
 
 const clear = async (req: Request, res: Response) => {
   const { token } = req as CustomRequest;
 
-  await prisma.cart.update({
+  await prisma.selectedProduct.deleteMany({
     where: { userId: token.userId },
-    data: {
-      productsIds: [],
-    },
   });
 
   return res.status(201).json({ message: "Success" });
