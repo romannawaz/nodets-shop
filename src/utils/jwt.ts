@@ -4,6 +4,9 @@ import { User } from "@prisma/client";
 import { sign } from "jsonwebtoken";
 import { config } from "../config/config";
 
+import { v4 as uuidv4 } from "uuid";
+import { addRefreshToken } from "./refreshToken";
+
 export const generateAccessToken = (user: User): string => {
   return sign({ userId: user.id }, config.token_key.access, {
     expiresIn: config.token_expires_in.access,
@@ -23,9 +26,13 @@ export const generateRefreshToken = (user: User, jti: string): string => {
   );
 };
 
-export const generateTokens = (user: User, jti: string) => {
+export const generateTokens = async (user: User) => {
+  const jti = uuidv4();
+
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user, jti);
+
+  await addRefreshToken(jti, refreshToken, user.id);
 
   return {
     accessToken,

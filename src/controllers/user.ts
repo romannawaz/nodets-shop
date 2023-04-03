@@ -1,12 +1,10 @@
 import { compare, hash } from "bcryptjs";
 import { Request, Response } from "express";
 
-import { v4 as uuidv4 } from "uuid";
-
 import prisma from "../../prisma";
 import { CustomRequest } from "../middleware/auth";
 import { generateTokens } from "../utils/jwt";
-import { addRefreshToken, deleteTokens } from "../utils/refreshToken";
+import { deleteTokens } from "../utils/refreshToken";
 
 const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -21,9 +19,7 @@ const login = async (req: Request, res: Response) => {
     return res.status(403).json({ message: "Invalid login credentials." });
   }
 
-  const jti = uuidv4();
-  const { accessToken, refreshToken } = generateTokens(existingUser, jti);
-  await addRefreshToken(jti, refreshToken, existingUser.id);
+  const { accessToken, refreshToken } = await generateTokens(existingUser);
 
   return res.json({
     accessToken,
@@ -61,10 +57,8 @@ const register = async (req: Request, res: Response) => {
       password: encryptedPassword,
     },
   });
-  // i think we can move this logic to service and reuse in both login and register
-  const jti = uuidv4();
-  const { accessToken, refreshToken } = generateTokens(newUser, jti);
-  await addRefreshToken(jti, refreshToken, newUser.id);
+
+  const { accessToken, refreshToken } = await generateTokens(newUser);
 
   return res.status(201).json({
     accessToken,
