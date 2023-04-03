@@ -10,12 +10,6 @@ import { addRefreshToken, deleteTokens } from "../utils/refreshToken";
 
 const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  // You can validate in middleware for more info please refer https://www.linkedin.com/pulse/dto-json-payload-expressjs-validation-middleware-imran-younas/
-  if (!email || !password) {
-    return res.status(400).json({
-      message: "You must provide an email and a password.",
-    });
-  }
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (!existingUser) {
@@ -48,9 +42,6 @@ const logout = async (req: Request, res: Response) => {
 
 const register = async (req: Request, res: Response) => {
   const { email, name, password } = req.body;
-
-  if (!(email && name && password))
-    return res.status(400).json({ message: "All input is required" });
 
   const isUserExist = await prisma.user.findUnique({
     where: {
