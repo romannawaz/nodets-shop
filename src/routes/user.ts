@@ -21,6 +21,7 @@ routes.post(
   dtoValidationMiddleware(UserSignUpDto),
   UserController.register
 );
+routes.post("/refresh_token", UserController.refreshToken);
 routes.get("/:id", isAuthenticated, UserController.readById);
 routes.patch("/:id", UserController.updateById);
 routes.delete("/:id", UserController.deleteById);

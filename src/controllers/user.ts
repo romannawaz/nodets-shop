@@ -1,8 +1,13 @@
 import { compare, hash } from "bcryptjs";
 import { Request, Response } from "express";
+import { JwtPayload, verify } from "jsonwebtoken";
 
 import prisma from "../../prisma";
+
+import { config } from "../config/config";
+
 import { CustomRequest } from "../middleware/auth";
+
 import { generateTokens } from "../utils/jwt";
 import { deleteTokens } from "../utils/refreshToken";
 
@@ -106,6 +111,33 @@ const deleteById = async (req: Request, res: Response) => {
   return res.status(200).json(deletedUser);
 };
 
+const refreshToken = async (req: Request, res: Response) => {
+  const authorization = req.headers.authorization;
+
+  let decoded: JwtPayload;
+  try {
+    decoded = verify(
+      authorization as string,
+      config.token_key.refresh
+    ) as JwtPayload;
+  } catch (error) {
+    return res.status(401).json(error);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.userId },
+  });
+
+  if (!user) return res.status(404).json({ message: "User does not exist" });
+
+  const { accessToken, refreshToken } = await generateTokens(user);
+
+  return res.status(200).json({
+    accessToken,
+    refreshToken,
+  });
+};
+
 export const UserController = {
   login,
   logout,
@@ -113,4 +145,5 @@ export const UserController = {
   readById,
   updateById,
   deleteById,
+  refreshToken,
 };
