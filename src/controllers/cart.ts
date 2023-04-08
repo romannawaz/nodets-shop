@@ -1,14 +1,9 @@
 import { Request, Response } from "express";
 import prisma from "../../prisma";
-import { CustomRequest } from "../middleware/auth";
-//req:CustomRequest
+
 const add = async (req: Request, res: Response) => {
   const { productId } = req.params;
-  //Why do we need to cast req to CustomRequest?
-  /**
-   * TODO: update Request type
-   */
-  const { token } = req as CustomRequest;
+  const { token } = req;
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
@@ -40,9 +35,8 @@ const add = async (req: Request, res: Response) => {
   return res.status(201).json({ message: "Success", payload: selectedProduct });
 };
 
-// same as before;
 const readByUserId = async (req: Request, res: Response) => {
-  const { token } = req as CustomRequest;
+  const { token } = req;
 
   const products = await prisma.selectedProduct.findMany({
     where: { userId: token.userId },
@@ -63,7 +57,7 @@ const readByUserId = async (req: Request, res: Response) => {
 
 // you can assign user into request in auth middleware and have something like  AuthenticatedRequest
 const removeProduct = async (req: Request, res: Response) => {
-  const { token } = req as CustomRequest;
+  const { token } = req;
   const { productId } = req.params;
 
   const product = await prisma.product.findUnique({
@@ -113,7 +107,7 @@ const removeProduct = async (req: Request, res: Response) => {
 };
 
 const clear = async (req: Request, res: Response) => {
-  const { token } = req as CustomRequest;
+  const { token } = req;
 
   await prisma.selectedProduct.deleteMany({
     where: { userId: token.userId },

@@ -6,8 +6,6 @@ import prisma from "../../prisma";
 
 import { config } from "../config/config";
 
-import { CustomRequest } from "../middleware/auth";
-
 import { generateTokens } from "../utils/jwt";
 import { deleteTokens } from "../utils/refreshToken";
 
@@ -34,7 +32,7 @@ const login = async (req: Request, res: Response) => {
 };
 // You decided to use session based authentication?
 const logout = async (req: Request, res: Response) => {
-  const { token } = req as CustomRequest;
+  const { token } = req;
 
   await deleteTokens(token.userId);
 
