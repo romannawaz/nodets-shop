@@ -1,11 +1,13 @@
+import { Prisma, RefreshToken } from "@prisma/client";
+
 import prisma from "../../prisma";
+
 import { hashToken } from "./hashToken";
-// Please add return type
 export const addRefreshToken = (
   jti: string,
   refreshToken: string,
   userId: string
-) => {
+): Promise<RefreshToken> => {
   return prisma.refreshToken.create({
     data: {
       id: jti,
@@ -15,7 +17,7 @@ export const addRefreshToken = (
   });
 };
 
-export const deleteTokens = (userId: string) => {
+export const deleteTokens = (userId: string): Promise<Prisma.BatchPayload> => {
   return prisma.refreshToken.deleteMany({
     where: {
       userId,

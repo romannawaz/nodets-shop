@@ -1,12 +1,16 @@
 import express, { NextFunction, Request, Response } from "express";
 import http from "http";
 import prisma from "../prisma";
+import helmet from "helmet";
+import cors from "cors";
 
 import { config } from "./config/config";
 
 import Logging from "./library/logging";
 
 import { AppRoutes } from "./routes";
+
+import { errorHandler } from "./middleware/errorHandler";
 
 const router = express();
 
@@ -37,30 +41,19 @@ const StartServer = () => {
   router.use(express.urlencoded({ extended: true }));
   router.use(express.json());
 
-  /** Routes of API */
-  router.use((req: Request, res: Response, next: NextFunction) => {
-    // there are libraries for this like https://www.npmjs.com/package/cors
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header(
-      "Access-Control-Allow-Origin",
-      "Origin, X-Request-With, Content-Type, Accept, Authorization"
-    );
+  /** Cors */
+  router.use(cors());
 
-    if (req.method == "OPTIONS") {
-      res.header(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, PATCH, DELETE"
-      );
-
-      return res.status(200).json({});
-    }
-
-    next();
-  });
-  // also please add helmet for security https://www.npmjs.com/package/helmet
+  /** Helmet */
+  router.use(helmet());
 
   /** Routes */
   router.use("/api", AppRoutes);
+
+  /**
+   * Error Handler
+   */
+  router.use(errorHandler);
 
   /** Healthcheck */
   router.get("/ping", (req: Request, res: Response) =>
